@@ -52,15 +52,22 @@ async function loadPhotos() {
 
     for (const file of files) {
       try {
-        const exifData = await exifr.parse(file.path);
+        const exifData = await exifr.parse(file.path, {
+          reviveValues: false,
+          translateKeys: false,
+          translateValues: false,
+          mergeOutput: false
+        });
         photos.push({
           ...file,
-          exif: exifData || {}
+          exif: exifData || {},
+          cacheBuster: Date.now()
         });
       } catch (err) {
         photos.push({
           ...file,
-          exif: {}
+          exif: {},
+          cacheBuster: Date.now()
         });
       }
     }
@@ -91,7 +98,7 @@ function displayPhotos() {
     card.onclick = () => showPhotoDetail(index);
 
     const img = document.createElement('img');
-    img.src = photo.path;
+    img.src = `${photo.path}?t=${photo.cacheBuster}`;
     img.alt = photo.name;
     img.onerror = () => {
       img.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><rect width="200" height="200" fill="%23ddd"/><text x="50%" y="50%" text-anchor="middle" fill="%23999">Error</text></svg>';
@@ -138,7 +145,7 @@ function showPhotoDetail(index) {
   const photo = photos[index];
   const panel = document.getElementById('detailPanel');
 
-  document.getElementById('detailImage').src = photo.path;
+  document.getElementById('detailImage').src = `${photo.path}?t=${photo.cacheBuster}`;
 
   const filenameElement = document.getElementById('detailFilename');
   filenameElement.textContent = photo.name;
