@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Photo Manager</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Photo Manager</h1>
+      <div class="controls">
+        <button id="selectFolderBtn">Select Folder</button>
+        <button id="refreshBtn">Refresh</button>
+        <span id="currentPath" class="current-path"></span>
+      </div>
+    </header>
+
+    <div id="photoCount" class="photo-count"></div>
+
+    <div id="photoGrid" class="photo-grid">
+      <div class="loading">Loading photos...</div>
+    </div>
+
+    <div id="detailPanel" class="detail-panel hidden">
+      <div class="detail-header">
+        <h2>Photo Details</h2>
+        <button id="closeDetailBtn">×</button>
+      </div>
+      <div class="detail-content">
+        <img id="detailImage" src="" alt="Photo">
+        <div class="detail-info">
+          <div class="info-group">
+            <label>Filename:</label>
+            <span id="detailFilename"></span>
+          </div>
+          <div class="info-group">
+            <label>Date Taken:</label>
+            <span id="detailDateTaken"></span>
+          </div>
+          <div class="info-group">
+            <label>Date Created:</label>
+            <span id="detailDateCreated"></span>
+          </div>
+          <div class="info-group">
+            <label>Date Modified:</label>
+            <span id="detailDateModified"></span>
+          </div>
+          <div class="info-group">
+            <label>Title:</label>
+            <span id="detailTitle"></span>
+          </div>
+          <div class="info-group">
+            <label>Camera:</label>
+            <span id="detailCamera"></span>
+          </div>
+          <div class="info-group">
+            <label>Dimensions:</label>
+            <span id="detailDimensions"></span>
+          </div>
+          <div class="info-group">
+            <label>File Size:</label>
+            <span id="detailSize"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>

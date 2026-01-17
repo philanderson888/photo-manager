@@ -1,0 +1,15 @@
+{
+  "name": "photo-manager",
+  "version": "1.0.0",
+  "description": "A cross-platform photo manager built with Electron",
+  "main": "main.js",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "electron": "^40.0.0",
+    "exifr": "^7.1.3"
+  }
+}

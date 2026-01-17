@@ -1,0 +1,177 @@
+const { ipcRenderer } = require('electron');
+const exifr = require('exifr');
+const fs = require('fs');
+
+let currentDirectory = '';
+let photos = [];
+
+async function init() {
+  currentDirectory = await ipcRenderer.invoke('get-current-directory');
+  document.getElementById('currentPath').textContent = currentDirectory;
+  await loadPhotos();
+
+  document.getElementById('selectFolderBtn').addEventListener('click', async () => {
+    const newPath = await ipcRenderer.invoke('select-directory');
+    if (newPath) {
+      currentDirectory = newPath;
+      document.getElementById('currentPath').textContent = currentDirectory;
+      await loadPhotos();
+    }
+  });
+
+  document.getElementById('refreshBtn').addEventListener('click', async () => {
+    await loadPhotos();
+  });
+
+  document.getElementById('closeDetailBtn').addEventListener('click', () => {
+    document.getElementById('detailPanel').classList.add('hidden');
+  });
+}
+
+async function loadPhotos() {
+  const photoGrid = document.getElementById('photoGrid');
+  photoGrid.innerHTML = '<div class="loading">Loading photos...</div>';
+
+  try {
+    const files = await ipcRenderer.invoke('read-directory', currentDirectory);
+    photos = [];
+
+    for (const file of files) {
+      try {
+        const exifData = await exifr.parse(file.path);
+        photos.push({
+          ...file,
+          exif: exifData || {}
+        });
+      } catch (err) {
+        photos.push({
+          ...file,
+          exif: {}
+        });
+      }
+    }
+
+    displayPhotos();
+  } catch (err) {
+    photoGrid.innerHTML = `<div class="error">Error loading photos: ${err.message}</div>`;
+  }
+}
+
+function displayPhotos() {
+  const photoGrid = document.getElementById('photoGrid');
+  const photoCount = document.getElementById('photoCount');
+
+  if (photos.length === 0) {
+    photoGrid.innerHTML = '<div class="no-photos">No photos found in this directory</div>';
+    photoCount.textContent = '';
+    return;
+  }
+
+  photoCount.textContent = `${photos.length} photo${photos.length !== 1 ? 's' : ''} found`;
+
+  photoGrid.innerHTML = '';
+
+  photos.forEach((photo, index) => {
+    const card = document.createElement('div');
+    card.className = 'photo-card';
+    card.onclick = () => showPhotoDetail(index);
+
+    const img = document.createElement('img');
+    img.src = photo.path;
+    img.alt = photo.name;
+    img.onerror = () => {
+      img.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><rect width="200" height="200" fill="%23ddd"/><text x="50%" y="50%" text-anchor="middle" fill="%23999">Error</text></svg>';
+    };
+
+    const info = document.createElement('div');
+    info.className = 'photo-info';
+
+    const name = document.createElement('div');
+    name.className = 'photo-name';
+    name.textContent = photo.name;
+    name.title = photo.name;
+
+    const dateTaken = document.createElement('div');
+    dateTaken.className = 'photo-date';
+    if (photo.exif.DateTimeOriginal) {
+      dateTaken.textContent = formatDate(photo.exif.DateTimeOriginal);
+    } else if (photo.exif.DateTime) {
+      dateTaken.textContent = formatDate(photo.exif.DateTime);
+    } else {
+      dateTaken.textContent = 'Date unknown';
+    }
+
+    const title = document.createElement('div');
+    title.className = 'photo-title';
+    if (photo.exif.ImageDescription || photo.exif.XPTitle) {
+      title.textContent = photo.exif.ImageDescription || photo.exif.XPTitle;
+    }
+
+    info.appendChild(name);
+    info.appendChild(dateTaken);
+    if (title.textContent) {
+      info.appendChild(title);
+    }
+
+    card.appendChild(img);
+    card.appendChild(info);
+    photoGrid.appendChild(card);
+  });
+}
+
+function showPhotoDetail(index) {
+  const photo = photos[index];
+  const panel = document.getElementById('detailPanel');
+
+  document.getElementById('detailImage').src = photo.path;
+  document.getElementById('detailFilename').textContent = photo.name;
+
+  const dateTaken = photo.exif.DateTimeOriginal || photo.exif.DateTime;
+  document.getElementById('detailDateTaken').textContent = dateTaken ? formatDate(dateTaken) : 'Not available';
+
+  document.getElementById('detailDateCreated').textContent = formatDate(photo.birthtime);
+  document.getElementById('detailDateModified').textContent = formatDate(photo.mtime);
+
+  const title = photo.exif.ImageDescription || photo.exif.XPTitle || 'Not available';
+  document.getElementById('detailTitle').textContent = title;
+
+  const camera = [];
+  if (photo.exif.Make) camera.push(photo.exif.Make);
+  if (photo.exif.Model) camera.push(photo.exif.Model);
+  document.getElementById('detailCamera').textContent = camera.length > 0 ? camera.join(' ') : 'Not available';
+
+  const dimensions = (photo.exif.ImageWidth && photo.exif.ImageHeight)
+    ? `${photo.exif.ImageWidth} × ${photo.exif.ImageHeight}`
+    : 'Not available';
+  document.getElementById('detailDimensions').textContent = dimensions;
+
+  document.getElementById('detailSize').textContent = formatFileSize(photo.size);
+
+  panel.classList.remove('hidden');
+}
+
+function formatDate(date) {
+  if (!date) return 'Not available';
+
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return 'Invalid date';
+
+  return d.toLocaleString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit'
+  });
+}
+
+function formatFileSize(bytes) {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+}
+
+init();
