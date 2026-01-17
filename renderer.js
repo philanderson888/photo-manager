@@ -6,7 +6,14 @@ let currentDirectory = '';
 let photos = [];
 
 async function init() {
-  currentDirectory = await ipcRenderer.invoke('get-current-directory');
+  const savedPath = localStorage.getItem('lastUsedPath');
+
+  if (savedPath && fs.existsSync(savedPath)) {
+    currentDirectory = savedPath;
+  } else {
+    currentDirectory = await ipcRenderer.invoke('get-current-directory');
+  }
+
   document.getElementById('currentPath').textContent = currentDirectory;
   await loadPhotos();
 
@@ -14,6 +21,7 @@ async function init() {
     const newPath = await ipcRenderer.invoke('select-directory');
     if (newPath) {
       currentDirectory = newPath;
+      localStorage.setItem('lastUsedPath', currentDirectory);
       document.getElementById('currentPath').textContent = currentDirectory;
       await loadPhotos();
     }
