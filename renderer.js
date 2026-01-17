@@ -132,10 +132,30 @@ function showPhotoDetail(index) {
   const panel = document.getElementById('detailPanel');
 
   document.getElementById('detailImage').src = photo.path;
-  document.getElementById('detailFilename').textContent = photo.name;
+
+  const filenameElement = document.getElementById('detailFilename');
+  filenameElement.textContent = photo.name;
+  filenameElement.className = '';
 
   const dateTaken = photo.exif.DateTimeOriginal || photo.exif.DateTime;
-  document.getElementById('detailDateTaken').textContent = dateTaken ? formatDate(dateTaken) : 'Not available';
+  const dateTakenElement = document.getElementById('detailDateTaken');
+  dateTakenElement.textContent = dateTaken ? formatDate(dateTaken) : 'Not available';
+  dateTakenElement.className = '';
+
+  const filenameYYYYMM = extractYYYYMMFromFilename(photo.name);
+
+  if (!dateTaken) {
+    dateTakenElement.classList.add('missing-data');
+  }
+
+  if (!filenameYYYYMM) {
+    filenameElement.classList.add('date-mismatch');
+  } else if (dateTaken) {
+    const dateTakenYYYYMM = getYYYYMMFromDate(dateTaken);
+    if (filenameYYYYMM !== dateTakenYYYYMM) {
+      dateTakenElement.classList.add('date-mismatch');
+    }
+  }
 
   document.getElementById('detailDateCreated').textContent = formatDate(photo.birthtime);
   document.getElementById('detailDateModified').textContent = formatDate(photo.mtime);
@@ -156,6 +176,31 @@ function showPhotoDetail(index) {
   document.getElementById('detailSize').textContent = formatFileSize(photo.size);
 
   panel.classList.remove('hidden');
+}
+
+function extractYYYYMMFromFilename(filename) {
+  const match = filename.match(/^(\d{6})/);
+  if (!match) return null;
+
+  const yyyymm = match[1];
+  const year = parseInt(yyyymm.substring(0, 4));
+  const month = parseInt(yyyymm.substring(4, 6));
+
+  if (year >= 1900 && year <= 2100 && month >= 1 && month <= 12) {
+    return yyyymm;
+  }
+
+  return null;
+}
+
+function getYYYYMMFromDate(date) {
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return null;
+
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+
+  return `${year}${month}`;
 }
 
 function formatDate(date) {

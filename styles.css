@@ -243,6 +243,18 @@ button:active {
   word-break: break-word;
 }
 
+.info-group span.missing-data {
+  background: #d3d3d3;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.info-group span.date-mismatch {
+  background: #f4c2c2;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
 ::-webkit-scrollbar {
   width: 10px;
 }
