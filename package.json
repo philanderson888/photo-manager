@@ -1,7 +1,7 @@
 {
   "name": "photo-manager",
   "version": "1.0.0",
-  "description": "A cross-platform photo manager built with Electron",
+  "description": "A photo manager built with Electron and Rust for EXIF metadata updates",
   "main": "main.js",
   "private": true,
   "scripts": {
@@ -11,5 +11,8 @@
   "dependencies": {
     "electron": "^40.0.0",
     "exifr": "^7.1.3"
-  }
+  },
+  "keywords": ["electron", "rust", "exif", "photo", "metadata"],
+  "author": "",
+  "license": "MIT"
 }

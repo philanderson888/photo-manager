@@ -34,7 +34,13 @@ async function init() {
   document.getElementById('closeDetailBtn').addEventListener('click', () => {
     document.getElementById('detailPanel').classList.add('hidden');
   });
+
+  document.getElementById('updateDateBtn').addEventListener('click', async () => {
+    await handleUpdateExif();
+  });
 }
+
+let currentPhotoIndex = -1;
 
 async function loadPhotos() {
   const photoGrid = document.getElementById('photoGrid');
@@ -128,6 +134,7 @@ function displayPhotos() {
 }
 
 function showPhotoDetail(index) {
+  currentPhotoIndex = index;
   const photo = photos[index];
   const panel = document.getElementById('detailPanel');
 
@@ -174,6 +181,23 @@ function showPhotoDetail(index) {
   document.getElementById('detailDimensions').textContent = dimensions;
 
   document.getElementById('detailSize').textContent = formatFileSize(photo.size);
+
+  const dateInput = document.getElementById('newDateInput');
+  if (dateTaken) {
+    const d = new Date(dateTaken);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const hours = String(d.getHours()).padStart(2, '0');
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    dateInput.value = `${year}-${month}-${day}T${hours}:${minutes}`;
+  } else {
+    dateInput.value = '';
+  }
+
+  const updateStatus = document.getElementById('updateStatus');
+  updateStatus.className = 'update-status';
+  updateStatus.textContent = '';
 
   panel.classList.remove('hidden');
 }
@@ -225,6 +249,55 @@ function formatFileSize(bytes) {
   const sizes = ['Bytes', 'KB', 'MB', 'GB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+}
+
+async function handleUpdateExif() {
+  if (currentPhotoIndex < 0) return;
+
+  const photo = photos[currentPhotoIndex];
+  const dateInput = document.getElementById('newDateInput');
+  const updateBtn = document.getElementById('updateDateBtn');
+  const statusDiv = document.getElementById('updateStatus');
+
+  if (!dateInput.value) {
+    statusDiv.className = 'update-status error';
+    statusDiv.textContent = 'Please select a date and time';
+    return;
+  }
+
+  const selectedDate = new Date(dateInput.value);
+  const year = selectedDate.getFullYear();
+  const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+  const day = String(selectedDate.getDate()).padStart(2, '0');
+  const hours = String(selectedDate.getHours()).padStart(2, '0');
+  const minutes = String(selectedDate.getMinutes()).padStart(2, '0');
+  const seconds = String(selectedDate.getSeconds()).padStart(2, '0');
+
+  const formattedDateTime = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+
+  statusDiv.className = 'update-status loading';
+  statusDiv.textContent = 'Updating EXIF data using Rust...';
+  updateBtn.disabled = true;
+
+  try {
+    const result = await ipcRenderer.invoke('update-exif-rust', photo.path, formattedDateTime);
+
+    statusDiv.className = 'update-status success';
+    statusDiv.textContent = 'EXIF date updated successfully! Refreshing...';
+
+    setTimeout(async () => {
+      await loadPhotos();
+      showPhotoDetail(currentPhotoIndex);
+      statusDiv.className = 'update-status success';
+      statusDiv.textContent = 'Update complete!';
+    }, 1000);
+
+  } catch (error) {
+    statusDiv.className = 'update-status error';
+    statusDiv.textContent = `Error: ${error.error || error.message || 'Unknown error'}`;
+  } finally {
+    updateBtn.disabled = false;
+  }
 }
 
 init();
