@@ -258,29 +258,36 @@ async function handleUpdateExif() {
   const dateInput = document.getElementById('newDateInput');
   const updateBtn = document.getElementById('updateDateBtn');
   const statusDiv = document.getElementById('updateStatus');
+  const dateSource = document.querySelector('input[name="dateSource"]:checked').value;
 
-  if (!dateInput.value) {
-    statusDiv.className = 'update-status error';
-    statusDiv.textContent = 'Please select a date and time';
-    return;
+  let dateParameter;
+
+  if (dateSource === 'manual') {
+    if (!dateInput.value) {
+      statusDiv.className = 'update-status error';
+      statusDiv.textContent = 'Please select a date and time';
+      return;
+    }
+
+    const selectedDate = new Date(dateInput.value);
+    const year = selectedDate.getFullYear();
+    const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+    const day = String(selectedDate.getDate()).padStart(2, '0');
+    const hours = String(selectedDate.getHours()).padStart(2, '0');
+    const minutes = String(selectedDate.getMinutes()).padStart(2, '0');
+    const seconds = String(selectedDate.getSeconds()).padStart(2, '0');
+
+    dateParameter = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+  } else {
+    dateParameter = dateSource;
   }
-
-  const selectedDate = new Date(dateInput.value);
-  const year = selectedDate.getFullYear();
-  const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
-  const day = String(selectedDate.getDate()).padStart(2, '0');
-  const hours = String(selectedDate.getHours()).padStart(2, '0');
-  const minutes = String(selectedDate.getMinutes()).padStart(2, '0');
-  const seconds = String(selectedDate.getSeconds()).padStart(2, '0');
-
-  const formattedDateTime = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 
   statusDiv.className = 'update-status loading';
   statusDiv.textContent = 'Updating EXIF data using Rust...';
   updateBtn.disabled = true;
 
   try {
-    const result = await ipcRenderer.invoke('update-exif-rust', photo.path, formattedDateTime);
+    const result = await ipcRenderer.invoke('update-exif-rust', photo.path, dateParameter);
 
     statusDiv.className = 'update-status success';
     statusDiv.textContent = 'EXIF date updated successfully! Refreshing...';

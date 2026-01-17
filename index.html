@@ -67,7 +67,31 @@
           <div class="info-group update-section">
             <label>Update Date Taken (Rust):</label>
             <div class="update-controls">
-              <input type="datetime-local" id="newDateInput" />
+              <div class="date-source-options">
+                <label class="radio-option">
+                  <input type="radio" name="dateSource" value="manual" checked>
+                  <span>Manual Date:</span>
+                </label>
+                <input type="datetime-local" id="newDateInput" />
+              </div>
+              <div class="date-source-options">
+                <label class="radio-option">
+                  <input type="radio" name="dateSource" value="filename">
+                  <span>From Filename (YYYYMM)</span>
+                </label>
+              </div>
+              <div class="date-source-options">
+                <label class="radio-option">
+                  <input type="radio" name="dateSource" value="modified">
+                  <span>From Date Modified</span>
+                </label>
+              </div>
+              <div class="date-source-options">
+                <label class="radio-option">
+                  <input type="radio" name="dateSource" value="created">
+                  <span>From Date Created</span>
+                </label>
+              </div>
               <button id="updateDateBtn">Update EXIF</button>
               <div id="updateStatus" class="update-status"></div>
             </div>
