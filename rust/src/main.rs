@@ -38,9 +38,6 @@ fn update_exif_date(file_path: &str, datetime_str: &str) -> Result<(), Box<dyn s
     let dt = NaiveDateTime::parse_from_str(datetime_str, "%Y-%m-%d %H:%M:%S")
         .map_err(|e| format!("Invalid datetime format '{}'. Expected format: YYYY-MM-DD HH:MM:SS", e))?;
 
-    // Convert to Windows file time format (for PowerShell)
-    let file_time_str = dt.format("%m/%d/%Y %I:%M:%S %p").to_string();
-
     // Get absolute path
     let absolute_path = fs::canonicalize(file_path)
         .map_err(|e| format!("Failed to resolve path: {}", e))?;
